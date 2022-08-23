@@ -137,6 +137,13 @@ type Client interface {
 	GetCompactionState(ctx context.Context, id int64) (entity.CompactionState, error)
 	// GetCompactionStateWithPlans get compaction state with plans of provided compaction id
 	GetCompactionStateWithPlans(ctx context.Context, id int64) (entity.CompactionState, []entity.CompactionPlan, error)
+
+	// Import data files(json, numpy, etc.) on MinIO/S3 storage, read and parse them into sealed segments
+	Import(ctx context.Context, collName string, partitionName string, channelNames []string, rowBased bool, files []string, options map[string]string) ([]int64, error)
+	// GetImportState checks import task state
+	GetImportState(ctx context.Context, taskId int64) (*entity.ImportTaskState, error)
+	// ListImportTasks list state of all import tasks
+	ListImportTasks(ctx context.Context, collName string, limit int64) ([]*entity.ImportTaskState, error)
 }
 
 // SearchResult contains the result from Search api of client
