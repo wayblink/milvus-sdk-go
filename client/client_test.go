@@ -4,8 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"net"
 	"reflect"
+	"strings"
 	"testing"
+	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/examples/helloworld/helloworld"
+	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	"github.com/milvus-io/milvus-sdk-go/v2/internal/proto/common"
@@ -144,6 +154,75 @@ func TestGrpcClientClose(t *testing.T) {
 		assert.Nil(t, c.Close())
 		assert.Nil(t, c.Close())
 	})
+}
+
+type Tserver struct {
+	helloworld.UnimplementedGreeterServer
+	reqCounter   uint
+	SuccessCount uint
+}
+
+func (s *Tserver) SayHello(ctx context.Context, in *helloworld.HelloRequest) (*helloworld.HelloReply, error) {
+	log.Printf("Received: %s", in.Name)
+	s.reqCounter++
+	if s.reqCounter%s.SuccessCount == 0 {
+		log.Printf("success %d", s.reqCounter)
+		return &helloworld.HelloReply{Message: strings.ToUpper(in.Name)}, nil
+	}
+	return nil, status.Errorf(codes.Unavailable, "server: fail it")
+}
+
+func TestGrpcClientRetryPolicy(t *testing.T) {
+	// server
+	port := ":50051"
+	address := "localhost:50051"
+	lis, err := net.Listen("tcp", port)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	var kaep = keepalive.EnforcementPolicy{
+		MinTime:             5 * time.Second,
+		PermitWithoutStream: true,
+	}
+	var kasp = keepalive.ServerParameters{
+		Time:    60 * time.Second,
+		Timeout: 60 * time.Second,
+	}
+
+	maxAttempts := 5
+	s := grpc.NewServer(
+		grpc.KeepaliveEnforcementPolicy(kaep),
+		grpc.KeepaliveParams(kasp),
+	)
+	helloworld.RegisterGreeterServer(s, &Tserver{SuccessCount: uint(maxAttempts)})
+	reflection.Register(s)
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+	defer s.Stop()
+
+	client, err := NewGrpcClient(context.TODO(), address)
+	assert.Nil(t, err)
+	defer client.Close()
+
+	greeterClient := helloworld.NewGreeterClient(client.(*grpcClient).conn)
+	ctx := context.Background()
+	name := fmt.Sprintf("hello world %d", time.Now().Second())
+	res, err := greeterClient.SayHello(ctx, &helloworld.HelloRequest{Name: name})
+	assert.Nil(t, err)
+	assert.Equal(t, res.Message, strings.ToUpper(name))
+}
+
+func TestClient_getDefaultAuthOpts(t *testing.T) {
+	username := "u"
+	password := "pwd"
+	defaultOpts := getDefaultAuthOpts(username, password, true)
+	assert.True(t, len(defaultOpts) == 6)
+
+	defaultOpts = getDefaultAuthOpts(username, password, false)
+	assert.True(t, len(defaultOpts) == 6)
 }
 
 func successStatus() (*common.Status, error) {

@@ -19,9 +19,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
+	"google.golang.org/grpc"
+
 	common "github.com/milvus-io/milvus-sdk-go/v2/internal/proto/common"
 	server "github.com/milvus-io/milvus-sdk-go/v2/internal/proto/server"
-	"google.golang.org/grpc"
 )
 
 // grpcClient, uses default grpc service definition to connect with Milvus2.0
@@ -32,18 +33,14 @@ type grpcClient struct {
 
 // connect connect to service
 func (c *grpcClient) connect(ctx context.Context, addr string, opts ...grpc.DialOption) error {
-
-	// if not options provided, use default settings
-	if len(opts) == 0 {
-		opts = append(opts, grpc.WithInsecure(),
-			grpc.WithBlock(),                // block connect until healthy or timeout
-			grpc.WithTimeout(2*time.Second)) // set connect timeout to 2 Second
+	if addr == "" {
+		return fmt.Errorf("address is empty")
 	}
-
-	conn, err := grpc.DialContext(ctx, addr, opts...)
+	conn, err := grpc.Dial(addr, opts...)
 	if err != nil {
 		return err
 	}
+
 	c.conn = conn
 	c.service = server.NewMilvusServiceClient(c.conn)
 	return nil
@@ -232,6 +229,13 @@ func (c *grpcClient) DescribeCollection(ctx context.Context, collName string) (*
 		ShardNum:         resp.GetShardsNum(),
 	}
 	collection.Name = collection.Schema.CollectionName
+	colInfo := collInfo{
+		ID:               collection.ID,
+		Name:             collection.Name,
+		Schema:           collection.Schema,
+		ConsistencyLevel: collection.ConsistencyLevel,
+	}
+	MetaCache.setCollectionInfo(resp.CollectionName, &colInfo)
 	return collection, nil
 }
 
@@ -251,7 +255,11 @@ func (c *grpcClient) DropCollection(ctx context.Context, collName string) error 
 	if err != nil {
 		return err
 	}
-	return handleRespStatus(resp)
+	err = handleRespStatus(resp)
+	if err == nil {
+		MetaCache.setCollectionInfo(collName, nil)
+	}
+	return err
 }
 
 // HasCollection check whether collection name exists
