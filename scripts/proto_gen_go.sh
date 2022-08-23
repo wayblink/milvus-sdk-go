@@ -3,6 +3,7 @@ SCRIPTS_DIR=$(dirname "$0")
 
 PROTO_DIR=$SCRIPTS_DIR/../internal/proto
 MILVUS_PROTO_DIR=$SCRIPTS_DIR/../internal/milvus-proto
+GOOGLE_PROTOPATH=/Users/wanganyang/git_base/protobuf-3.9.0
 
 PROGRAM=$(basename "$0")
 GOPATH=$(go env GOPATH)
@@ -36,17 +37,17 @@ protoc --proto_path=${MILVUS_PROTO_DIR}/proto \
     --go_opt="Mmilvus.proto=github.com/milvus-io/milvus-sdk-go/v2/internal/proto/server;server" \
     --go_opt=Mcommon.proto=github.com/milvus-io/milvus-sdk-go/v2/internal/proto/common \
     --go_opt=Mschema.proto=github.com/milvus-io/milvus-sdk-go/v2/internal/proto/schema \
-    --go_out=plugins=grpc,paths=source_relative:${PROTO_DIR}/server ${MILVUS_PROTO_DIR}/proto/milvus.proto
+    --go_out=paths=source_relative:${PROTO_DIR}/server ${MILVUS_PROTO_DIR}/proto/milvus.proto
 protoc --proto_path=${MILVUS_PROTO_DIR}/proto \
     --proto_path=${GOOGLE_PROTOPATH} \
     --go_opt=Mmilvus.proto=github.com/milvus-io/milvus-sdk-go/v2/internal/proto/server \
     --go_opt="Mcommon.proto=github.com/milvus-io/milvus-sdk-go/v2/internal/proto/common;common" \
     --go_opt=Mschema.proto=github.com/milvus-io/milvus-sdk-go/v2/internal/proto/schema \
-    --go_out=plugins=grpc,paths=source_relative:${PROTO_DIR}/common ${MILVUS_PROTO_DIR}/proto/common.proto
+    --go_out=paths=source_relative:${PROTO_DIR}/common ${MILVUS_PROTO_DIR}/proto/common.proto
 protoc --proto_path=${MILVUS_PROTO_DIR}/proto \
     --proto_path=${GOOGLE_PROTOPATH} \
     --go_opt=Mmilvus.proto=github.com/milvus-io/milvus-sdk-go/v2/internal/proto/server \
     --go_opt=Mcommon.proto=github.com/milvus-io/milvus-sdk-go/v2/internal/proto/common \
     --go_opt="Mschema.proto=github.com/milvus-io/milvus-sdk-go/v2/internal/proto/schema;schema" \
-    --go_out=plugins=grpc,paths=source_relative:${PROTO_DIR}/schema ${MILVUS_PROTO_DIR}/proto/schema.proto
+    --go_out=paths=source_relative:${PROTO_DIR}/schema ${MILVUS_PROTO_DIR}/proto/schema.proto
 

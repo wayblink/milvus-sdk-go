@@ -516,6 +516,90 @@ func (c *grpcClient) CalcDistance(ctx context.Context, collName string, partitio
 	return nil, errors.New("distance field not supported")
 }
 
+// Import data files(json, numpy, etc.) on MinIO/S3 storage, read and parse them into sealed segments
+func (c *grpcClient) Import(ctx context.Context, collName string, partitionName string, channelNames []string, rowBased bool, files []string, options map[string]string) ([]int64, error) {
+	if c.service == nil {
+		return []int64{}, ErrClientNotReady
+	}
+	req := &server.ImportRequest{
+		CollectionName: collName,
+		PartitionName:  partitionName,
+		ChannelNames:   channelNames,
+		RowBased:       rowBased,
+		Files:          files,
+		Options:        entity.MapKvPairs(options),
+	}
+	resp, err := c.service.Import(ctx, req)
+	if err != nil {
+		return []int64{}, err
+	}
+	if err := handleRespStatus(resp.GetStatus()); err != nil {
+		return []int64{}, err
+	}
+
+	return resp.Tasks, nil
+}
+
+// GetImportState checks import task state
+func (c *grpcClient) GetImportState(ctx context.Context, taskId int64) (*entity.ImportTaskState, error) {
+	if c.service == nil {
+		return nil, ErrClientNotReady
+	}
+	req := &server.GetImportStateRequest{
+		Task: taskId,
+	}
+	resp, err := c.service.GetImportState(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err := handleRespStatus(resp.GetStatus()); err != nil {
+		return nil, err
+	}
+
+	return &entity.ImportTaskState{
+		Id:       resp.GetId(),
+		State:    entity.ImportState(resp.GetState()),
+		RowCount: resp.GetRowCount(),
+		IdList:   resp.GetIdList(),
+		Infos:    entity.KvPairsMap(resp.GetInfos()),
+		// CollectionId int64
+		// SegmentIds   []int64
+	}, nil
+}
+
+// ListImportTasks list state of all import tasks
+func (c *grpcClient) ListImportTasks(ctx context.Context, collName string, limit int64) ([]*entity.ImportTaskState, error) {
+	if c.service == nil {
+		return nil, ErrClientNotReady
+	}
+	req := &server.ListImportTasksRequest{
+		CollectionName: collName,
+		Limit:          limit,
+	}
+	resp, err := c.service.ListImportTasks(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err := handleRespStatus(resp.GetStatus()); err != nil {
+		return nil, err
+	}
+
+	tasks := make([]*entity.ImportTaskState, 0)
+	for _, task := range resp.GetTasks() {
+		tasks = append(tasks, &entity.ImportTaskState{
+			Id:           task.GetId(),
+			State:        entity.ImportState(task.GetState()),
+			RowCount:     task.GetRowCount(),
+			IdList:       task.GetIdList(),
+			Infos:        entity.KvPairsMap(task.GetInfos()),
+			CollectionId: task.GetCollectionId(),
+			SegmentIds:   task.GetSegmentIds(),
+		})
+	}
+
+	return tasks, nil
+}
+
 func columnToVectorsArray(collName string, partitions []string, column entity.Column) *server.VectorsArray {
 	result := &server.VectorsArray{}
 	switch column.Type() {
