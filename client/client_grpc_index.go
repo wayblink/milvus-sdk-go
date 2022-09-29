@@ -57,7 +57,7 @@ func (c *GrpcClient) CreateIndex(ctx context.Context, collName string, fieldName
 		return err
 	}
 
-	flushErr := c.Flush(ctx, collName, true)
+	_, _, _, flushErr := c.Flush(ctx, collName, true)
 	if flushErr != nil {
 		return flushErr
 	}
