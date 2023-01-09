@@ -697,6 +697,6 @@ func TestGrpcClientGetLoadState(t *testing.T) {
 
 	state, err := c.GetLoadState(ctx, testCollectionName, []string{})
 	assert.NoError(t, err)
-	assert.Equal(t, entity.LoadState_LoadStateLoaded, state)
+	assert.Equal(t, entity.LoadStateLoaded, state)
 
 }

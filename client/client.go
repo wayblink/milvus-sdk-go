@@ -169,6 +169,9 @@ type Client interface {
 	GetLoadingProgress(ctx context.Context, collectionName string, partitionNames []string) (int64, error)
 	// GetLoadState get the collection or partitions load state
 	GetLoadState(ctx context.Context, collectionName string, partitionNames []string) (entity.LoadState, error)
+
+	// GetVersion get milvus version
+	GetVersion(ctx context.Context) (string, error)
 }
 
 // SearchResult contains the result from Search api of client

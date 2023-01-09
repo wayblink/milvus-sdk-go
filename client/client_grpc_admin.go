@@ -9,13 +9,21 @@
 // is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
 // or implied. See the License for the specific language governing permissions and limitations under the License.
 
-package entity
+package client
 
-type LoadState int32
+import (
+	"context"
 
-const (
-	LoadStateNotExist LoadState = 0
-	LoadStateNotLoad  LoadState = 1
-	LoadStateLoading  LoadState = 2
-	LoadStateLoaded   LoadState = 3
+	server "github.com/milvus-io/milvus-proto/go-api/milvuspb"
 )
+
+func (c *GrpcClient) GetVersion(ctx context.Context) (string, error) {
+	if c.Service == nil {
+		return "", ErrClientNotReady
+	}
+	resp, err := c.Service.GetVersion(ctx, &server.GetVersionRequest{})
+	if err != nil {
+		return "", err
+	}
+	return resp.GetVersion(), nil
+}
