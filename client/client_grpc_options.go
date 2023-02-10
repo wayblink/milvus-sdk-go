@@ -39,6 +39,13 @@ func WithReplicaNumber(rn int32) LoadCollectionOption {
 	}
 }
 
+// WithRefresh specifies a specific ReplicaNumber, rather than using the default ReplicaNumber.
+func WithRefresh(rn int32) LoadCollectionOption {
+	return func(req *server.LoadCollectionRequest) {
+		req.ReplicaNumber = rn
+	}
+}
+
 // SearchQueryOption is an option of search/query request
 type SearchQueryOption struct {
 	// Consistency Level & Time travel
