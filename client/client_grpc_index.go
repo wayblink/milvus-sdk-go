@@ -169,6 +169,7 @@ func (c *GrpcClient) DescribeIndex(ctx context.Context, collName string, fieldNa
 		idx := entity.NewGenericIndex(
 			info.IndexName,
 			entity.IndexType(it),
+			fieldName,
 			params,
 		)
 		indexes = append(indexes, idx)
