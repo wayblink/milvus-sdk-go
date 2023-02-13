@@ -670,6 +670,11 @@ func main() {
 					"level = -1",
 				},
 			},
+			{
+				IdxName:         "TRIE",
+				IdxType:         entity.TRIE,
+				ConstructParams: []idxParam{},
+			},
 		},
 	}
 
