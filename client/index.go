@@ -21,7 +21,7 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
-func (c *GrpcClient) checkCollField(ctx context.Context, collName string, fieldName string) error {
+func (c *GrpcClient) checkCollVecField(ctx context.Context, collName string, fieldName string) error {
 	if err := c.checkCollectionExists(ctx, collName); err != nil {
 		return err
 	}
@@ -36,6 +36,28 @@ func (c *GrpcClient) checkCollField(ctx context.Context, collName string, fieldN
 			if f.DataType != entity.FieldTypeFloatVector && f.DataType != entity.FieldTypeBinaryVector {
 				return fmt.Errorf("field %s of collection %s is not vector field", fieldName, collName)
 			}
+			break
+		}
+	}
+	if f == nil {
+		return fmt.Errorf("field %s of collection %s does not exist", fieldName, collName)
+	}
+	return nil
+}
+
+// check if the collection and field exist
+func (c *GrpcClient) checkCollField(ctx context.Context, collName string, fieldName string) error {
+	if err := c.checkCollectionExists(ctx, collName); err != nil {
+		return err
+	}
+	coll, err := c.DescribeCollection(ctx, collName)
+	if err != nil {
+		return err
+	}
+	var f *entity.Field
+	for _, field := range coll.Schema.Fields {
+		if field.Name == fieldName {
+			f = field
 			break
 		}
 	}
@@ -146,8 +168,9 @@ func (c *GrpcClient) DescribeIndex(ctx context.Context, collName string, fieldNa
 		params := entity.KvPairsMap(info.Params)
 		it := params["index_type"] // TODO change to const
 		idx := entity.NewGenericIndex(
-			info.IndexName,
+			info.GetIndexName(),
 			entity.IndexType(it),
+			info.GetFieldName(),
 			params,
 		)
 		indexes = append(indexes, idx)
