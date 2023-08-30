@@ -55,6 +55,11 @@ func(i *Index{{.IdxName}}) IndexType() IndexType {
 	return IndexType("{{.IdxType}}")
 }
 
+// FieldName returns FieldName, implementing Index interface
+func(i *Index{{.IdxName}}) FieldName() string {
+	return "{{.FieldName}}"
+}
+
 // SupportBinary returns whether index type support binary vector
 func(i *Index{{.IdxName}}) SupportBinary() bool {
 	return {{.VectorSupport}} & 2 > 0
@@ -223,6 +228,7 @@ func TestIndex{{.IdxName}}SearchParam(t *testing.T) {
 type idxDef struct {
 	IdxName             string
 	IdxType             entity.IndexType
+	FieldName           string
 	VectorSupport       int8
 	ConstructParams     []idxParam
 	SearchParams        []idxParam
@@ -329,6 +335,7 @@ func main() {
 			{
 				IdxName:         "Flat",
 				IdxType:         entity.Flat,
+				FieldName:       "vec_field",
 				ConstructParams: []idxParam{},
 				SearchParams:    []idxParam{},
 				ValidExamples: []string{
@@ -344,6 +351,7 @@ func main() {
 			{
 				IdxName:       "BinFlat",
 				IdxType:       entity.BinFlat,
+				FieldName:     "vec_field",
 				VectorSupport: int8(binaryVectorSupport),
 				ConstructParams: []idxParam{
 					{
@@ -374,8 +382,9 @@ func main() {
 			},
 			// IVF_FLAT
 			{
-				IdxName: "IvfFlat",
-				IdxType: entity.IvfFlat,
+				IdxName:   "IvfFlat",
+				IdxType:   entity.IvfFlat,
+				FieldName: "vec_field",
 				ConstructParams: []idxParam{
 					{
 						Name:           "nlist",
@@ -407,6 +416,7 @@ func main() {
 			{
 				IdxName:       "BinIvfFlat",
 				IdxType:       entity.BinIvfFlat,
+				FieldName:     "vec_field",
 				VectorSupport: int8(binaryVectorSupport),
 				ConstructParams: []idxParam{
 					{
@@ -437,8 +447,9 @@ func main() {
 			},
 			// IVF_SQ8
 			{
-				IdxName: "IvfSQ8",
-				IdxType: entity.IvfSQ8,
+				IdxName:   "IvfSQ8",
+				IdxType:   entity.IvfSQ8,
+				FieldName: "vec_field",
 				ConstructParams: []idxParam{
 					{
 						Name:           "nlist",
@@ -468,8 +479,9 @@ func main() {
 			},
 			// IVF_PQ
 			{
-				IdxName: "IvfPQ",
-				IdxType: entity.IvfPQ,
+				IdxName:   "IvfPQ",
+				IdxType:   entity.IvfPQ,
+				FieldName: "vec_field",
 				ConstructParams: []idxParam{
 					{
 						Name:           "nlist",
@@ -509,8 +521,9 @@ func main() {
 			},
 			// HNSW
 			{
-				IdxName: "HNSW",
-				IdxType: entity.HNSW,
+				IdxName:   "HNSW",
+				IdxType:   entity.HNSW,
+				FieldName: "vec_field",
 				ConstructParams: []idxParam{
 					{
 						Name:           "M",
@@ -546,8 +559,9 @@ func main() {
 			},
 			// IVF_HNSW
 			{
-				IdxName: "IvfHNSW",
-				IdxType: entity.IvfHNSW,
+				IdxName:   "IvfHNSW",
+				IdxType:   entity.IvfHNSW,
+				FieldName: "vec_field",
 				ConstructParams: []idxParam{
 					{
 						Name:           "nlist",
@@ -596,6 +610,7 @@ func main() {
 			{
 				IdxName:         "DISKANN",
 				IdxType:         entity.DISKANN,
+				FieldName:       "vec_field",
 				ConstructParams: []idxParam{},
 				SearchParams: []idxParam{
 					{
@@ -618,6 +633,7 @@ func main() {
 			{
 				IdxName:         "AUTOINDEX",
 				IdxType:         entity.AUTOINDEX,
+				FieldName:       "vec_field",
 				ConstructParams: []idxParam{},
 				SearchParams: []idxParam{
 					{
@@ -639,8 +655,9 @@ func main() {
 				},
 			},
 			{
-				IdxName: "GPUIvfFlat",
-				IdxType: entity.GPUIvfFlat,
+				IdxName:   "GPUIvfFlat",
+				IdxType:   entity.GPUIvfFlat,
+				FieldName: "vec_field",
 				ConstructParams: []idxParam{
 					{
 						Name:           "nlist",
@@ -669,8 +686,9 @@ func main() {
 				},
 			},
 			{
-				IdxName: "GPUIvfPQ",
-				IdxType: entity.GPUIvfPQ,
+				IdxName:   "GPUIvfPQ",
+				IdxType:   entity.GPUIvfPQ,
+				FieldName: "vec_field",
 				ConstructParams: []idxParam{
 					{
 						Name:           "nlist",
@@ -709,8 +727,9 @@ func main() {
 				},
 			},
 			{
-				IdxName: "SCANN",
-				IdxType: entity.IvfFlat,
+				IdxName:   "SCANN",
+				IdxType:   entity.IvfFlat,
+				FieldName: "vec_field",
 				ConstructParams: []idxParam{
 					{
 						Name:           "nlist",
