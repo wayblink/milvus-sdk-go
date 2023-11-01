@@ -127,7 +127,7 @@ type Client interface {
 	Flush(ctx context.Context, collName string, async bool) error
 	// FlushV2 flush collection, specified, return newly sealed segmentIds, all flushed segmentIds of the collection, seal time and error
 	// currently it is only used in milvus-backup(https://github.com/zilliztech/milvus-backup)
-	FlushV2(ctx context.Context, collName string, async bool) ([]int64, []int64, int64, error)
+	FlushV2(ctx context.Context, collName string, async bool) ([]int64, []int64, int64, map[string]entity.MsgPosition, error)
 	// DeleteByPks deletes entries related to provided primary keys
 	DeleteByPks(ctx context.Context, collName string, partitionName string, ids entity.Column) error
 	// Delete deletes entries match expression
