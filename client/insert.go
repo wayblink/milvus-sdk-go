@@ -13,6 +13,7 @@ package client
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -197,7 +198,7 @@ func (c *GrpcClient) Flush(ctx context.Context, collName string, async bool) err
 
 // Flush force collection to flush memory records into storage
 // in sync mode, flush will wait all segments to be flushed
-func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) ([]int64, []int64, int64, map[string]entity.MsgPosition, error) {
+func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) ([]int64, []int64, int64, map[string]string, error) {
 	if c.Service == nil {
 		return nil, nil, 0, nil, ErrClientNotReady
 	}
@@ -245,16 +246,19 @@ func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) (
 			}
 		}
 	}
-	channelCPEntities := make(map[string]entity.MsgPosition, len(channelCPs))
+	channelCPEntities := make(map[string]string, len(channelCPs))
 	for k, v := range channelCPs {
-		channelCPEntities[k] = entity.MsgPosition{
-			ChannelName: v.GetChannelName(),
-			MsgID:       v.GetMsgID(),
-			MsgGroup:    v.GetMsgGroup(),
-			Timestamp:   v.GetTimestamp(),
-		}
+		channelCPEntities[k] = Base64MsgPosition(v)
 	}
 	return resp.GetCollSegIDs()[collName].GetData(), resp.GetFlushCollSegIDs()[collName].GetData(), resp.GetCollSealTimes()[collName], channelCPEntities, nil
+}
+
+func Base64MsgPosition(position *milvuspb.MsgPosition) string {
+	positionByte, err := proto.Marshal(position)
+	if err != nil {
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(positionByte)
 }
 
 // DeleteByPks deletes entries related to provided primary keys
