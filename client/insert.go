@@ -198,7 +198,7 @@ func (c *GrpcClient) Flush(ctx context.Context, collName string, async bool) err
 
 // Flush force collection to flush memory records into storage
 // in sync mode, flush will wait all segments to be flushed
-func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) ([]int64, []int64, int64, map[string]string, error) {
+func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) ([]int64, []int64, int64, map[string]milvuspb.MsgPosition, error) {
 	if c.Service == nil {
 		return nil, nil, 0, nil, ErrClientNotReady
 	}
@@ -246,9 +246,14 @@ func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) (
 			}
 		}
 	}
-	channelCPEntities := make(map[string]string, len(channelCPs))
+	channelCPEntities := make(map[string]milvuspb.MsgPosition, len(channelCPs))
 	for k, v := range channelCPs {
-		channelCPEntities[k] = Base64MsgPosition(v)
+		channelCPEntities[k] = milvuspb.MsgPosition{
+			ChannelName: v.GetChannelName(),
+			MsgID:       v.GetMsgID(),
+			MsgGroup:    v.GetMsgGroup(),
+			Timestamp:   v.GetTimestamp(),
+		}
 	}
 	return resp.GetCollSegIDs()[collName].GetData(), resp.GetFlushCollSegIDs()[collName].GetData(), resp.GetCollSealTimes()[collName], channelCPEntities, nil
 }
