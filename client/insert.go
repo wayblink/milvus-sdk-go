@@ -231,7 +231,9 @@ func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) (
 					return false
 				}
 				if !resp.GetFlushed() {
-					channelCPs = resp.GetChannelCps()
+					for k, v := range resp.GetChannelCps() {
+						channelCPs[k] = v
+					}
 				}
 				return resp.GetFlushed()
 			}
