@@ -217,6 +217,7 @@ func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) (
 		return nil, nil, 0, nil, err
 	}
 	channelCPs := resp.GetChannelCps()
+	flushTs := resp.GetCollFlushTs()[collName]
 	if !async {
 		segmentIDs, has := resp.GetCollSegIDs()[collName]
 		ids := segmentIDs.GetData()
@@ -224,6 +225,7 @@ func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) (
 			flushed := func() bool {
 				resp, err := c.Service.GetFlushState(ctx, &milvuspb.GetFlushStateRequest{
 					SegmentIDs: ids,
+					FlushTs:    flushTs,
 				})
 
 				if err != nil {
