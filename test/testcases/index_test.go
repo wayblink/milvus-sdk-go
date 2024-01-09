@@ -33,7 +33,7 @@ func TestCreateIndex(t *testing.T) {
 
 		// describe index
 		indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultFloatVecFieldName)
-		expIndex := entity.NewGenericIndex(common.DefaultIndexName, idx.IndexType(), idx.Params())
+		expIndex := entity.NewGenericIndex(common.DefaultIndexName, idx.IndexType(), common.DefaultFloatVecFieldName, idx.Params())
 		common.CheckIndexResult(t, indexes, expIndex)
 	}
 }
@@ -73,7 +73,7 @@ func TestCreateIndexString(t *testing.T) {
 
 	// describe index
 	indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultVarcharFieldName)
-	expIndex := entity.NewGenericIndex("scalar_index", "", idx.Params())
+	expIndex := entity.NewGenericIndex("scalar_index", "", common.DefaultFloatVecFieldName, idx.Params())
 	common.CheckIndexResult(t, indexes, expIndex)
 }
 
@@ -189,7 +189,7 @@ func TestCreateIndexIp(t *testing.T) {
 
 		// describe index
 		indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultFloatVecFieldName)
-		expIndex := entity.NewGenericIndex("my_index", idx.IndexType(), idx.Params())
+		expIndex := entity.NewGenericIndex("my_index", idx.IndexType(), common.DefaultFloatVecFieldName, idx.Params())
 		common.CheckIndexResult(t, indexes, expIndex)
 	}
 }
@@ -216,7 +216,7 @@ func TestCreateIndexBinaryFlat(t *testing.T) {
 
 		// describe index
 		indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultBinaryVecFieldName)
-		expIndex := entity.NewGenericIndex("my_index", idx.IndexType(), idx.Params())
+		expIndex := entity.NewGenericIndex("my_index", idx.IndexType(), common.DefaultFloatVecFieldName, idx.Params())
 		common.CheckIndexResult(t, indexes, expIndex)
 	}
 }
@@ -243,7 +243,7 @@ func TestCreateIndexBinaryIvfFlat(t *testing.T) {
 
 		// describe index
 		indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultBinaryVecFieldName)
-		expIndex := entity.NewGenericIndex("my_index", idx.IndexType(), idx.Params())
+		expIndex := entity.NewGenericIndex("my_index", idx.IndexType(), common.DefaultFloatVecFieldName, idx.Params())
 		common.CheckIndexResult(t, indexes, expIndex)
 	}
 }
@@ -290,7 +290,7 @@ func TestCreateIndexWithoutName(t *testing.T) {
 
 	// describe index return index with default name
 	indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultFloatVecFieldName)
-	expIndex := entity.NewGenericIndex(common.DefaultFloatVecFieldName, idx.IndexType(), idx.Params())
+	expIndex := entity.NewGenericIndex(common.DefaultFloatVecFieldName, idx.IndexType(), common.DefaultFloatVecFieldName, idx.Params())
 	common.CheckIndexResult(t, indexes, expIndex)
 }
 
@@ -304,7 +304,7 @@ func TestCreateIndexWithoutIndexTypeParams(t *testing.T) {
 	collName, _ := createCollectionWithDataIndex(ctx, t, mc, false, false)
 
 	// create index
-	idx := entity.NewGenericIndex("", "", nil)
+	idx := entity.NewGenericIndex("", "", common.DefaultFloatVecFieldName, nil)
 	err := mc.CreateIndex(ctx, collName, common.DefaultFloatVecFieldName, idx, false)
 	common.CheckErr(t, err, true)
 
@@ -314,7 +314,7 @@ func TestCreateIndexWithoutIndexTypeParams(t *testing.T) {
 		"metric_type": string(entity.IP),
 		"index_type":  string(entity.AUTOINDEX),
 	}
-	expIndex := entity.NewGenericIndex(common.DefaultFloatVecFieldName, entity.AUTOINDEX, expParams)
+	expIndex := entity.NewGenericIndex(common.DefaultIndexName, entity.AUTOINDEX, common.DefaultFloatVecFieldName, expParams)
 	common.CheckIndexResult(t, indexes, expIndex)
 }
 
@@ -329,13 +329,13 @@ func TestCreateIndexGeneric(t *testing.T) {
 
 	// create index
 	IvfFlatParams := map[string]string{"nlist": "128", "metric_type": "L2"}
-	idx := entity.NewGenericIndex("my_index", entity.IvfFlat, IvfFlatParams)
+	idx := entity.NewGenericIndex("my_index", entity.IvfFlat, common.DefaultFloatVecFieldName, IvfFlatParams)
 	err := mc.CreateIndex(ctx, collName, common.DefaultFloatVecFieldName, idx, false)
 	common.CheckErr(t, err, true)
 
 	// describe index
 	indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultFloatVecFieldName)
-	expIndex := entity.NewGenericIndex(common.DefaultFloatVecFieldName, idx.IndexType(), idx.Params())
+	expIndex := entity.NewGenericIndex(common.DefaultIndexName, idx.IndexType(), common.DefaultFloatVecFieldName, idx.Params())
 	common.CheckIndexResult(t, indexes, expIndex)
 }
 
