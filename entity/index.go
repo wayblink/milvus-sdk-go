@@ -80,6 +80,7 @@ type Index interface {
 	Name() string
 	IndexType() IndexType
 	Params() map[string]string
+	FieldName() string
 }
 
 // SearchParam interface for index related search param
@@ -117,8 +118,9 @@ func newBaseSearchParams() baseSearchParams {
 }
 
 type baseIndex struct {
-	it   IndexType
-	name string
+	it        IndexType
+	name      string
+	fieldName string
 }
 
 // Name implements Index
@@ -129,6 +131,11 @@ func (b baseIndex) Name() string {
 // IndexType implements Index
 func (b baseIndex) IndexType() IndexType {
 	return b.it
+}
+
+// FieldName implements Index
+func (b baseIndex) FieldName() string {
+	return b.fieldName
 }
 
 // GenericIndex index struct for general usage
@@ -151,11 +158,12 @@ func (gi GenericIndex) Params() map[string]string {
 }
 
 // NewGenericIndex create generic index instance
-func NewGenericIndex(name string, it IndexType, params map[string]string) Index {
+func NewGenericIndex(name string, it IndexType, fieldName string, params map[string]string) Index {
 	return GenericIndex{
 		baseIndex: baseIndex{
-			it:   it,
-			name: name,
+			it:        it,
+			name:      name,
+			fieldName: fieldName,
 		},
 		params: params,
 	}
