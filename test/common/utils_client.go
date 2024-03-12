@@ -33,6 +33,12 @@ func WithIsPartitionKey(isPartitionKey bool) CreateFieldOption {
 	}
 }
 
+func WithIsClusteringKey(isClusteringKey bool) CreateFieldOption {
+	return func(field *entity.Field) {
+		field.WithIsClusteringKey(isClusteringKey)
+	}
+}
+
 func WithDim(dim int64) CreateFieldOption {
 	return func(field *entity.Field) {
 		field.WithDim(dim)
