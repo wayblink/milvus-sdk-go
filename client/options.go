@@ -293,3 +293,12 @@ type DropPartitionOption func(*milvuspb.DropPartitionRequest)
 type LoadPartitionsOption func(*milvuspb.LoadPartitionsRequest)
 
 type ReleasePartitionsOption func(*milvuspb.ReleasePartitionsRequest)
+
+type ManualCompactionOption func(request *milvuspb.ManualCompactionRequest)
+
+// IsMajor specifies it is major compaction
+func IsMajor() ManualCompactionOption {
+	return func(req *milvuspb.ManualCompactionRequest) {
+		req.MajorCompaction = true
+	}
+}

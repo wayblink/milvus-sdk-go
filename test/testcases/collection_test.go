@@ -586,3 +586,31 @@ func TestGetStaticsCollectionNotExisted(t *testing.T) {
 	_, errStatist := mc.GetCollectionStatistics(ctx, "collName")
 	common.CheckErr(t, errStatist, false, "collection collName does not exist")
 }
+
+func TestCreateCollectionClusteringKey(t *testing.T) {
+	ctx := createContext(t, time.Second*common.DefaultTimeout)
+	mc := createMilvusClient(ctx, t)
+
+	//invalidPkFields := []entity.FieldType{
+	//	entity.FieldTypeBool,
+	//	entity.FieldTypeInt8,
+	//	entity.FieldTypeInt16,
+	//	entity.FieldTypeInt32,
+	//	entity.FieldTypeFloat,
+	//	entity.FieldTypeDouble,
+	//	entity.FieldTypeJSON,
+	//}
+	pkField := common.GenField("count", entity.FieldTypeInt64, common.WithIsPrimaryKey(true))
+	//for _, fieldType := range invalidPkFields {
+	fields := []*entity.Field{
+		pkField,
+		common.GenField("key", entity.FieldTypeInt64, common.WithIsClusteringKey(true)),
+		common.GenField("random", entity.FieldTypeDouble),
+		common.GenField("var", entity.FieldTypeVarChar, common.WithMaxLength(10000)),
+		common.GenField("embeddings", entity.FieldTypeFloatVector, common.WithDim(128)),
+	}
+	schema := common.GenSchema("hello_milvus_ck", false, fields)
+	errWithoutPk := mc.CreateCollection(ctx, schema, 1)
+	common.CheckErr(t, errWithoutPk, false, "the data type of partition key should be Int64 or VarChar")
+	//}
+}

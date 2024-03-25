@@ -3,6 +3,7 @@
 package testcases
 
 import (
+	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"log"
 	"testing"
 	"time"
@@ -85,4 +86,13 @@ func TestCompactEmptyCollection(t *testing.T) {
 	common.CheckErr(t, errPlans, true)
 	require.Equal(t, compactionState, entity.CompactionStateCompleted)
 	require.Len(t, compactionPlans, 0)
+}
+
+func TestCompactCollectionMajor(t *testing.T) {
+	ctx := createContext(t, time.Second*common.DefaultTimeout)
+	// connect
+	mc := createMilvusClient(ctx, t)
+
+	_, err := mc.Compact(ctx, "hello_milvus_ck", 0, client.IsMajor())
+	common.CheckErr(t, err, true, "")
 }

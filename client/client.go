@@ -14,9 +14,8 @@ package client
 
 import (
 	"context"
-	"time"
-
 	"google.golang.org/grpc"
+	"time"
 
 	"github.com/milvus-io/milvus-proto/go-api/v2/msgpb"
 
@@ -161,7 +160,7 @@ type Client interface {
 	InsertRows(ctx context.Context, collName string, partitionName string, rows []interface{}) (entity.Column, error)
 
 	// ManualCompaction triggers a compaction on provided collection
-	ManualCompaction(ctx context.Context, collName string, toleranceDuration time.Duration) (int64, error)
+	ManualCompaction(ctx context.Context, collName string, toleranceDuration time.Duration, opts ...ManualCompactionOption) (int64, error)
 	// GetCompactionState get compaction state of provided compaction id
 	GetCompactionState(ctx context.Context, id int64) (entity.CompactionState, error)
 	// GetCompactionStateWithPlans get compaction state with plans of provided compaction id

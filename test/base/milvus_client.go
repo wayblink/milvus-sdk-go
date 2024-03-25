@@ -463,9 +463,9 @@ func (mc *MilvusClient) InsertRows(ctx context.Context, collName string, partiti
 }
 
 // Compact Manual Compaction
-func (mc *MilvusClient) Compact(ctx context.Context, collName string, toleranceDuration time.Duration) (int64, error) {
+func (mc *MilvusClient) Compact(ctx context.Context, collName string, toleranceDuration time.Duration, opts ...client.ManualCompactionOption) (int64, error) {
 	preRequest("ManualCompaction", ctx, collName, toleranceDuration)
-	compactionID, err := mc.mClient.ManualCompaction(ctx, collName, toleranceDuration)
+	compactionID, err := mc.mClient.ManualCompaction(ctx, collName, toleranceDuration, opts...)
 	postResponse("ManualCompaction", err, compactionID)
 	return compactionID, err
 }
