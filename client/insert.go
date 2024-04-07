@@ -13,6 +13,7 @@ package client
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -191,18 +192,18 @@ func (c *GrpcClient) mergeDynamicColumns(dynamicName string, rowSize int, column
 // Flush force collection to flush memory records into storage
 // in sync mode, flush will wait all segments to be flushed
 func (c *GrpcClient) Flush(ctx context.Context, collName string, async bool) error {
-	_, _, _, err := c.FlushV2(ctx, collName, async)
+	_, _, _, _, err := c.FlushV2(ctx, collName, async)
 	return err
 }
 
 // Flush force collection to flush memory records into storage
 // in sync mode, flush will wait all segments to be flushed
-func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) ([]int64, []int64, int64, error) {
+func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) ([]int64, []int64, int64, map[string]milvuspb.MsgPosition, error) {
 	if c.Service == nil {
-		return nil, nil, 0, ErrClientNotReady
+		return nil, nil, 0, nil, ErrClientNotReady
 	}
 	if err := c.checkCollectionExists(ctx, collName); err != nil {
-		return nil, nil, 0, err
+		return nil, nil, 0, nil, err
 	}
 	req := &milvuspb.FlushRequest{
 		DbName:          "", // reserved,
@@ -210,11 +211,13 @@ func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) (
 	}
 	resp, err := c.Service.Flush(ctx, req)
 	if err != nil {
-		return nil, nil, 0, err
+		return nil, nil, 0, nil, err
 	}
 	if err := handleRespStatus(resp.GetStatus()); err != nil {
-		return nil, nil, 0, err
+		return nil, nil, 0, nil, err
 	}
+	channelCPs := resp.GetChannelCps()
+	flushTs := resp.GetCollFlushTs()[collName]
 	if !async {
 		segmentIDs, has := resp.GetCollSegIDs()[collName]
 		ids := segmentIDs.GetData()
@@ -222,10 +225,17 @@ func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) (
 			flushed := func() bool {
 				resp, err := c.Service.GetFlushState(ctx, &milvuspb.GetFlushStateRequest{
 					SegmentIDs: ids,
+					FlushTs:    flushTs,
 				})
+
 				if err != nil {
 					// TODO max retry
 					return false
+				}
+				if !resp.GetFlushed() {
+					for k, v := range resp.GetChannelCps() {
+						channelCPs[k] = v
+					}
 				}
 				return resp.GetFlushed()
 			}
@@ -233,14 +243,31 @@ func (c *GrpcClient) FlushV2(ctx context.Context, collName string, async bool) (
 				// respect context deadline/cancel
 				select {
 				case <-ctx.Done():
-					return nil, nil, 0, errors.New("deadline exceeded")
+					return nil, nil, 0, nil, errors.New("deadline exceeded")
 				default:
 				}
 				time.Sleep(200 * time.Millisecond)
 			}
 		}
 	}
-	return resp.GetCollSegIDs()[collName].GetData(), resp.GetFlushCollSegIDs()[collName].GetData(), resp.GetCollSealTimes()[collName], nil
+	channelCPEntities := make(map[string]milvuspb.MsgPosition, len(channelCPs))
+	for k, v := range channelCPs {
+		channelCPEntities[k] = milvuspb.MsgPosition{
+			ChannelName: v.GetChannelName(),
+			MsgID:       v.GetMsgID(),
+			MsgGroup:    v.GetMsgGroup(),
+			Timestamp:   v.GetTimestamp(),
+		}
+	}
+	return resp.GetCollSegIDs()[collName].GetData(), resp.GetFlushCollSegIDs()[collName].GetData(), resp.GetCollSealTimes()[collName], channelCPEntities, nil
+}
+
+func Base64MsgPosition(position *milvuspb.MsgPosition) string {
+	positionByte, err := proto.Marshal(position)
+	if err != nil {
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(positionByte)
 }
 
 // DeleteByPks deletes entries related to provided primary keys
