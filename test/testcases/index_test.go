@@ -47,7 +47,7 @@ func TestCreateIndex(t *testing.T) {
 
 		// describe index
 		indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultFloatVecFieldName)
-		expIndex := entity.NewGenericIndex(common.DefaultIndexName, idx.IndexType(), idx.Params())
+		expIndex := entity.NewGenericIndex(common.DefaultIndexName, idx.IndexType(), common.DefaultFloatVecFieldName, idx.Params())
 		common.CheckIndexResult(t, indexes, expIndex)
 
 		// drop index
@@ -159,6 +159,11 @@ func TestCreateScalarIndex(t *testing.T) {
 	cp := CollectionParams{CollectionFieldsType: AllFields, AutoID: false, EnableDynamicField: true,
 		ShardsNum: common.DefaultShards, Dim: common.DefaultDim}
 	collName := createCollection(ctx, t, mc, cp)
+
+	// describe index
+	indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultVarcharFieldName)
+	expIndex := entity.NewGenericIndex("scalar_index", "", common.DefaultFloatVecFieldName, idx.Params())
+	common.CheckIndexResult(t, indexes, expIndex)
 
 	// insert
 	dp := DataParams{CollectionName: collName, PartitionName: "", CollectionFieldsType: AllFields,
@@ -288,6 +293,28 @@ func TestCreateIndexArrayField(t *testing.T) {
 	}
 }
 
+// test create index with supported float vector index, Ip metric type
+func TestCreateIndexIp(t *testing.T) {
+	t.Parallel()
+
+	// create index
+	allFloatIndexes := common.GenAllFloatIndex(entity.IP)
+	for _, idx := range allFloatIndexes {
+		ctx := createContext(t, time.Second*common.DefaultTimeout*3)
+		// connect
+		mc := createMilvusClient(ctx, t)
+		// create default collection with flush data
+		collName, _ := createCollectionWithDataIndex(ctx, t, mc, false, false)
+		err := mc.CreateIndex(ctx, collName, common.DefaultFloatVecFieldName, idx, false, client.WithIndexName("my_index"))
+		common.CheckErr(t, err, true)
+
+		// describe index
+		indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultFloatVecFieldName)
+		expIndex := entity.NewGenericIndex("my_index", idx.IndexType(), common.DefaultFloatVecFieldName, idx.Params())
+		common.CheckIndexResult(t, indexes, expIndex)
+	}
+}
+
 // test create index with supported binary vector index
 func TestCreateIndexBinaryFlat(t *testing.T) {
 	t.Parallel()
@@ -306,7 +333,7 @@ func TestCreateIndexBinaryFlat(t *testing.T) {
 
 		// describe index
 		indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultBinaryVecFieldName)
-		expIndex := entity.NewGenericIndex("my_index", idx.IndexType(), idx.Params())
+		expIndex := entity.NewGenericIndex("my_index", idx.IndexType(), common.DefaultFloatVecFieldName, idx.Params())
 		common.CheckIndexResult(t, indexes, expIndex)
 	}
 }
@@ -329,7 +356,7 @@ func TestCreateIndexBinaryIvfFlat(t *testing.T) {
 
 		// describe index
 		indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultBinaryVecFieldName)
-		expIndex := entity.NewGenericIndex("my_index", idx.IndexType(), idx.Params())
+		expIndex := entity.NewGenericIndex("my_index", idx.IndexType(), common.DefaultFloatVecFieldName, idx.Params())
 		common.CheckIndexResult(t, indexes, expIndex)
 	}
 }
@@ -389,7 +416,7 @@ func TestCreateIndexWithoutName(t *testing.T) {
 
 	// describe index return index with default name
 	indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultFloatVecFieldName)
-	expIndex := entity.NewGenericIndex(common.DefaultFloatVecFieldName, idx.IndexType(), idx.Params())
+	expIndex := entity.NewGenericIndex(common.DefaultFloatVecFieldName, idx.IndexType(), common.DefaultFloatVecFieldName, idx.Params())
 	common.CheckIndexResult(t, indexes, expIndex)
 }
 
@@ -403,7 +430,7 @@ func TestCreateIndexWithoutIndexTypeParams(t *testing.T) {
 	collName, _ := createCollectionWithDataIndex(ctx, t, mc, false, false)
 
 	// create index
-	idx := entity.NewGenericIndex("", "", nil)
+	idx := entity.NewGenericIndex("", "", common.DefaultFloatVecFieldName, nil)
 	err := mc.CreateIndex(ctx, collName, common.DefaultFloatVecFieldName, idx, false)
 	common.CheckErr(t, err, true)
 
@@ -413,7 +440,7 @@ func TestCreateIndexWithoutIndexTypeParams(t *testing.T) {
 		"metric_type": string(entity.IP),
 		"index_type":  string(entity.AUTOINDEX),
 	}
-	expIndex := entity.NewGenericIndex(common.DefaultFloatVecFieldName, entity.AUTOINDEX, expParams)
+	expIndex := entity.NewGenericIndex(common.DefaultIndexName, entity.AUTOINDEX, common.DefaultFloatVecFieldName, expParams)
 	common.CheckIndexResult(t, indexes, expIndex)
 }
 
@@ -428,13 +455,13 @@ func TestCreateIndexGeneric(t *testing.T) {
 
 	// create index
 	IvfFlatParams := map[string]string{"nlist": "128", "metric_type": "L2"}
-	idx := entity.NewGenericIndex("my_index", entity.IvfFlat, IvfFlatParams)
+	idx := entity.NewGenericIndex("my_index", entity.IvfFlat, common.DefaultFloatVecFieldName, IvfFlatParams)
 	err := mc.CreateIndex(ctx, collName, common.DefaultFloatVecFieldName, idx, false)
 	common.CheckErr(t, err, true)
 
 	// describe index
 	indexes, _ := mc.DescribeIndex(ctx, collName, common.DefaultFloatVecFieldName)
-	expIndex := entity.NewGenericIndex(common.DefaultFloatVecFieldName, idx.IndexType(), idx.Params())
+	expIndex := entity.NewGenericIndex(common.DefaultIndexName, idx.IndexType(), common.DefaultFloatVecFieldName, idx.Params())
 	common.CheckIndexResult(t, indexes, expIndex)
 }
 

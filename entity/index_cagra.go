@@ -16,6 +16,10 @@ type IndexGPUCagra struct {
 	graphDegree             int
 }
 
+func (i *IndexGPUCagra) FieldName() string {
+	return "vec_field"
+}
+
 // NewIndexGPUCagra returns an Index with GPU_CAGRA type.
 //   - intermediate_graph_degree:  The number of k-nearest neighbors (k) of this intermediate k-NN graph, trade off the quality of the final searchable CAGRA graph;
 //   - graph_degree: CAGRA's optimized graph fixed-degree number;
