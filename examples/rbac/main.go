@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"github.com/milvus-io/milvus-sdk-go/v2/entity"
+	"github.com/milvus-io/milvus-sdk-go/v2/internal/utils/crypto"
+	"google.golang.org/grpc/metadata"
 	"log"
 
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
-	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
 const (
@@ -29,27 +31,31 @@ func main() {
 	}
 	defer c.Close()
 
-	// create user
-	err = c.CreateCredential(ctx, "user123", "passwd1")
-	if err != nil {
-		log.Fatalf("failed to create user, err: %v", err)
-	}
-
-	// create role
-	c.CreateRole(ctx, "role123")
-	if err != nil {
-		log.Fatalf("failed to create role, err: %v", err)
-	}
-	c.Grant(ctx, "role123", entity.PriviledegeObjectTypeGlobal, "*", "read")
-
-	// grant role to user
-	c.AddUserRole(ctx, "user123", "role123")
-
+	//// create user
+	//err = c.CreateCredential(ctx, "user123", "passwd1")
+	//if err != nil {
+	//	log.Fatalf("failed to create user, err: %v", err)
+	//}
+	//
+	//// create role
+	//c.CreateRole(ctx, "role123")
+	//if err != nil {
+	//	log.Fatalf("failed to create role, err: %v", err)
+	//}
+	//
+	//ctx = GetContext(ctx, "root:123456")
+	//c.Grant(ctx, "role123", entity.PriviledegeObjectTypeGlobal, "*", "read")
+	//
+	//// grant role to user
+	//c.AddUserRole(ctx, "user123", "role123")
+	//
 	// backup rbac
 	meta, err := c.BackupRBAC(ctx)
 	if err != nil {
 		log.Fatalf("failed to backup rbac, err: %v", err)
 	}
+	log.Println(len(meta.Roles))
+	log.Println(len(meta.RoleGrants))
 
 	// clean rbac to make restore works
 	c.DropRole(ctx, "role123")
@@ -57,13 +63,21 @@ func main() {
 	c.Revoke(ctx, "role123", entity.PriviledegeObjectTypeGlobal, "*", "read")
 
 	// restore rbac
-	err = c.RestoreRBAC(ctx, meta)
-	if err != nil {
-		log.Fatalf("failed to restore rbac, err: %v", err)
-	}
+	//err = c.RestoreRBAC(ctx, meta)
+	//if err != nil {
+	//	log.Fatalf("failed to restore rbac, err: %v", err)
+	//}
 
 	// clean rbac
 	c.DropRole(ctx, "role123")
 	c.DeleteCredential(ctx, "user123")
 	c.Revoke(ctx, "role123", entity.PriviledegeObjectTypeGlobal, "*", "read")
+}
+
+func GetContext(ctx context.Context, originValue string) context.Context {
+	contextMap := map[string]string{
+		"authorization": crypto.Base64Encode(originValue),
+	}
+	md := metadata.New(contextMap)
+	return metadata.NewIncomingContext(ctx, md)
 }
